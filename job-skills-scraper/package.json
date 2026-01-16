@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "db:push": "npx drizzle-kit push",
     "seed": "tsx seed.ts",
     "scrape": "tsx scraper/index.ts",
     "rescrape": "tsx scraper/scrape.ts",
