@@ -1,60 +1,233 @@
+<template>
+  <div class="relative h-full w-full bg-slate-950">
+    <div ref="mapContainer" class="h-full w-full"></div>
+    
+    <!-- Loading State -->
+    <div 
+      v-if="loading" 
+      class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+    >
+      <div class="flex flex-col items-center">
+        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-sm font-bold uppercase tracking-widest text-slate-400">
+          Loading Map
+        </p>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="absolute bottom-6 left-6 z-10 bg-slate-900/90 p-4 border border-slate-800 rounded-lg backdrop-blur-md">
+      <h4 class="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Job Demand</h4>
+      <div class="h-2 w-32 bg-gradient-to-r from-slate-800 via-blue-600 to-cyan-400 rounded-full mb-1"></div>
+      <div class="flex justify-between text-[9px] text-slate-500 font-bold uppercase">
+        <span>Low</span>
+        <span>High</span>
+      </div>
+    </div>
+
+    <!-- Hover Tooltip -->
+    <div 
+      v-if="hoveredRegion"
+      class="absolute z-40 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 pointer-events-none shadow-2xl"
+      :style="{ top: `${tooltipY}px`, left: `${tooltipX}px` }"
+    >
+      <p class="text-sm font-bold text-white">{{ hoveredRegion.name }}</p>
+      <p class="text-xs text-blue-400 font-mono mt-1">
+        {{ hoveredRegion.demand }} jobs
+      </p>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import L from 'leaflet';
+import { onMounted, ref, nextTick, onUnmounted } from 'vue';
+import maplibregl from 'maplibre-gl';
 // @ts-ignore
-import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 const emit = defineEmits(['select-region']);
+const mapContainer = ref<HTMLElement | null>(null);
+const loading = ref(true);
+const hoveredRegion = ref<{ name: string; demand: number } | null>(null);
+const tooltipX = ref(0);
+const tooltipY = ref(0);
+
+let map: maplibregl.Map | null = null;
+let hoveredId: string | number | null = null;
+
+const slugify = (text: string): string => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+};
 
 onMounted(async () => {
-  // Initialize map centered on the PH archipelago
-  const map = L.map('map-container', {
-    zoomControl: false, // We'll keep it clean
+  await nextTick();
+  if (!mapContainer.value) return;
+
+  map = new maplibregl.Map({
+    container: mapContainer.value,
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center: [121.7740, 12.8797],
+    zoom: 5.5,
     attributionControl: false
-  }).setView([12.8797, 121.7740], 6);
+  });
 
-  // Dark Matter tiles from CartoDB
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+  map.on('load', async () => {
+    try {
+      // Fetch both GeoJSON and stats
+      const [geoRes, statsRes] = await Promise.all([
+        fetch('/maps/philippines-regions.json'),
+        fetch('http://localhost:3000/api/map-summary')
+      ]);
 
-  try {
-    // Fetching the official GeoJSON for PH Provinces
-    const res = await fetch('https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson/provinces.0.1.json');
-    const geojsonData = await res.json();
+      const geojson = await geoRes.json();
+      const stats = await statsRes.json();
+      
+      // Create stats lookup map
+      const statsMap = new Map(stats.map((s: any) => [s.slug, s.totalDemand]));
 
-    L.geoJSON(geojsonData, {
-      style: {
-        fillColor: '#1e40af', // blue-800
-        weight: 1,
-        opacity: 1,
-        color: '#334155', // slate-700
-        fillOpacity: 0.3
-      },
-      onEachFeature: (feature, layer) => {
-        // Interaction Logic
-        layer.on('mouseover', () => {
-          (layer as L.Path).setStyle({ fillOpacity: 0.7, fillColor: '#3b82f6' });
-        });
+      // Enrich GeoJSON with demand data
+      geojson.features = geojson.features.map((feature: any, index: number) => {
+        // Change this line to use the correct property from your JSON
+        const provinceName = feature.properties.adm2_en || feature.properties.name || '';
+        const slug = slugify(provinceName);
         
-        layer.on('mouseout', () => {
-          (layer as L.Path).setStyle({ fillOpacity: 0.3, fillColor: '#1e40af' });
-        });
+        return {
+          ...feature,
+          id: index, 
+          properties: {
+            ...feature.properties,
+            demand: statsMap.get(slug) || 0,
+            slug: slug,
+            displayName: provinceName
+          }
+        };
+      });
 
-        layer.on('click', () => {
-          // Convert "Metro Manila" -> "metro-manila" to match DB slugs
-          const slug = feature.properties.name.toLowerCase().replace(/\s+/g, '-');
-          emit('select-region', slug);
-          
-          // Smooth zoom to the region
-          map.fitBounds((layer as L.Polygon).getBounds(), { padding: [50, 50] });
+      // Add source
+      map!.addSource('ph-provinces', { 
+        type: 'geojson', 
+        data: geojson,
+        generateId: true // Let MapLibre generate IDs if not present
+      });
+
+      // Add fill layer
+      map!.addLayer({
+        id: 'province-fills',
+        type: 'fill',
+        source: 'ph-provinces',
+        paint: {
+          'fill-color': [
+            'interpolate', 
+            ['linear'], 
+            ['get', 'demand'],
+            0, '#0f172a',   // No data: very dark slate
+            5, '#1e3a8a',   // Very low: blue-900
+            15, '#2563eb',  // Low: blue-600
+            25, '#3b82f6',  // Medium: blue-500
+            35, '#06b6d4'   // High: cyan-500
+          ],
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            0.9,
+            0.7
+          ]
+        }
+      });
+
+      // Add border layer
+      map!.addLayer({
+        id: 'province-borders',
+        type: 'line',
+        source: 'ph-provinces',
+        paint: {
+          'line-color': '#475569',
+          'line-width': 1
+        }
+      });
+
+      // Click handler
+      map!.on('click', 'province-fills', (e) => {
+        if (!e.features?.[0]) return;
+        const { slug, displayName } = e.features[0].properties;
+        
+        console.log('Clicked region:', displayName, '(slug:', slug, ')');
+        emit('select-region', slug);
+        
+        map!.flyTo({ 
+          center: e.lngLat, 
+          zoom: 8,
+          duration: 1000
         });
-      }
-    }).addTo(map);
-  } catch (err) {
-    console.error("GeoJSON Load Error:", err);
-  }
+      });
+
+      // Hover handlers
+      map!.on('mousemove', 'province-fills', (e) => {
+        if (!e.features || e.features.length === 0) return;
+
+        map!.getCanvas().style.cursor = 'pointer';
+
+        // Update hover state
+        if (hoveredId !== null) {
+          map!.setFeatureState(
+            { source: 'ph-provinces', id: hoveredId }, 
+            { hover: false }
+          );
+        }
+
+        hoveredId = e.features[0].id as number;
+        map!.setFeatureState(
+          { source: 'ph-provinces', id: hoveredId }, 
+          { hover: true }
+        );
+
+        // Update tooltip
+        const props = e.features[0].properties;
+        hoveredRegion.value = {
+          name: props.displayName || props.name || 'Unknown',
+          demand: props.demand || 0
+        };
+        
+        tooltipX.value = e.point.x + 15;
+        tooltipY.value = e.point.y + 15;
+      });
+
+      map!.on('mouseleave', 'province-fills', () => {
+        map!.getCanvas().style.cursor = '';
+        
+        if (hoveredId !== null) {
+          map!.setFeatureState(
+            { source: 'ph-provinces', id: hoveredId }, 
+            { hover: false }
+          );
+        }
+        hoveredId = null;
+        hoveredRegion.value = null;
+      });
+
+      loading.value = false;
+      console.log('Map loaded successfully with', geojson.features.length, 'provinces');
+
+    } catch (err) {
+      console.error("Error loading map data:", err);
+      loading.value = false;
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (map) map.remove();
 });
 </script>
 
-<template>
-  <div id="map-container" class="h-full w-full"></div>
-</template>
+<style scoped>
+.maplibregl-map {
+  font-family: 'Inter', sans-serif;
+}
+</style>
