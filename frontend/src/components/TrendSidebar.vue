@@ -59,7 +59,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 
-// 1. In-update ang props para tanggapin ang displayName
 const props = defineProps<{
   slug: string | null,
   displayName?: string | null
@@ -74,7 +73,7 @@ interface Skill {
 
 const skills = ref<Skill[]>([]);
 const isLoading = ref(false);
-const regionName = ref(''); // Ito ang fallback kapag walang displayName
+const regionName = ref(''); 
 
 const maxCount = computed(() => {
   if (skills.value.length === 0) return 1;

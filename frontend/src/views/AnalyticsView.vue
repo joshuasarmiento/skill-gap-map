@@ -133,7 +133,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Scoped animations to match the rest of the app */
 @keyframes slide-up {
   from {
     opacity: 0;

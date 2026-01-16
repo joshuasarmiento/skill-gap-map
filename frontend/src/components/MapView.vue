@@ -40,7 +40,6 @@ import maplibregl from 'maplibre-gl';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-// 1. Define strict interfaces for type safety
 interface RegionStat {
   name: string;
   totalDemand: number;
@@ -99,8 +98,6 @@ onMounted(async () => {
     attributionControl: false
   });
 
-  
-
   map.on('load', async () => {
     try {
       const [geoRes, statsRes] = await Promise.all([
@@ -111,12 +108,6 @@ onMounted(async () => {
       const geojson = await geoRes.json();
       const stats: RegionStat[] = await statsRes.json();
 
-      // 3. Create a lookup Map for O(1) time complexity
-      const statsLookup = new Map<string, number>(
-        stats.map(s => [s.slug, s.totalDemand])
-      );
-
-      // 4. Transform GeoJSON features
       geojson.features = geojson.features.map((feature: any, index: number) => {
         const geojsonName = feature.properties.adm2_en || '';
         const config = NCR_DISTRICT_CONFIG[geojsonName];
@@ -144,8 +135,8 @@ onMounted(async () => {
           properties: {
             ...feature.properties,
             demand: totalDemand,
-            slug: finalSlug, // This is for fetching data (e.g., 'mandaluyong')
-            displayName: geojsonName // This is for the Title (e.g., 'NCR, Second District...')
+            slug: finalSlug, 
+            displayName: geojsonName 
           }
         };
       });
@@ -153,7 +144,7 @@ onMounted(async () => {
       map!.addSource('ph-provinces', {
         type: 'geojson',
         data: geojson,
-        generateId: false // We provided our own numeric IDs above
+        generateId: false 
       });
 
       map!.addLayer({
