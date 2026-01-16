@@ -4,40 +4,39 @@ import { SKILLS_DICTIONARY } from './scraper/skill-list';
 
 async function seed() {
   console.log('🧹 Clearing existing data...');
-  
-  // Order matters if you have Foreign Key constraints! 
+
   // Delete the "child" table (demand) before the "parent" table (regions/skills)
-  await db.delete(schema.skillDemand); 
-  await db.delete(schema.regions);
-  await db.delete(schema.skills);
+  // await db.delete(schema.skillDemand); 
+  // await db.delete(schema.regions);
+  // await db.delete(schema.skills);
 
   console.log('🌱 Seeding fresh database...\n');
 
   const regionData = [
     // --- DISTRICT 1: CAPITAL DISTRICT ---
-    { name: 'Manila', slug: 'manila' },
+    { name: 'Manila', slug: 'manila-city-metro-manila' },
 
     // --- DISTRICT 2: EASTERN MANILA ---
-    { name: 'Mandaluyong', slug: 'mandaluyong' },
-    { name: 'Pasig', slug: 'pasig' },
-    { name: 'Quezon City', slug: 'quezon-city' },
-    { name: 'Marikina', slug: 'marikina' },
-    { name: 'San Juan', slug: 'san-juan' },
+    { name: 'Mandaluyong', slug: 'mandaluyong-city-metro-manila' },
+    { name: 'Pasig', slug: 'pasig-city-metro-manila' },
+    { name: 'Quezon City', slug: 'quezon-city-metro-manila' },
+    { name: 'Marikina', slug: 'marikina-city-metro-manila' },
+    { name: 'San Juan', slug: 'san-juan-city-metro-manila' },
 
     // --- DISTRICT 3: NORTHERN MANILA (CAMANAVA) ---
-    { name: 'Caloocan', slug: 'caloocan' },
-    { name: 'Malabon', slug: 'malabon' },
-    { name: 'Navotas', slug: 'navotas' },
-    { name: 'Valenzuela', slug: 'valenzuela' },
+    { name: 'Caloocan', slug: 'caloocan-city-metro-manila' },
+    { name: 'Malabon', slug: 'malabon-city-metro-manila' },
+    { name: 'Navotas', slug: 'navotas-city-metro-manila' },
+    { name: 'Valenzuela', slug: 'valenzuela-city-metro-manila' },
 
     // --- DISTRICT 4: SOUTHERN MANILA ---
-    { name: 'Makati', slug: 'makati' },
-    { name: 'Pasay', slug: 'pasay' },
-    { name: 'Taguig', slug: 'taguig' },
-    { name: 'Parañaque', slug: 'paranaque' },
-    { name: 'Las Piñas', slug: 'las-pinas' },
-    { name: 'Muntinlupa', slug: 'muntinlupa' },
-    { name: 'Pateros', slug: 'pateros' }, // The only Municipality in NCR
+    { name: 'Makati', slug: 'makati-city-metro-manila' },
+    { name: 'Pasay', slug: 'pasay-city-metro-manila' },
+    { name: 'Taguig', slug: 'taguig-city-metro-manila' },
+    { name: 'Parañaque', slug: 'paranaque-city-metro-manila' },
+    { name: 'Las Piñas', slug: 'las-pinas-city-metro-manila' },
+    { name: 'Muntinlupa', slug: 'muntinlupa-city-metro-manila' },
+    { name: 'Pateros', slug: 'pateros-Metro-Manila' }, // The only Municipality in NCR
 
     // --- NCR Districts (Specific to your GeoJSON) ---
     // { name: 'NCR, City of Manila, First District (Not a Province)', slug: 'manila' },

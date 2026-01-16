@@ -14,14 +14,14 @@ async function runScraper() {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   });
   const page = await context.newPage();
-
+  
   const allRegions = await db.select().from(schema.regions);
 
   for (const region of allRegions) {
     console.log(`\n📍 Processing Region: ${region.name}`);
     
     // We scrape up to 5 pages per region to increase sample size
-    for (let p = 1; p <= 5; p++) {
+    for (let p = 1; p <= 15; p++) {
       const url = `https://ph.jobstreet.com/jobs/in-${region.slug}?page=${p}`;
       console.log(`  🔍 Scraping Page ${p}...`);
 

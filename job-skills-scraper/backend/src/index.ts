@@ -3,7 +3,8 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { db } from './db/index.js';
 import { regions, skillDemand, skills } from './db/schema.js';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
+import { NCR_DISTRICT_CONFIG } from './utils/ncrData';
 
 const app = new Hono();
 
@@ -42,31 +43,30 @@ app.get('/api/map-summary', async (c) => {
   }
 });
 
-// Get detailed skill trends for a specific region
 app.get('/api/trends/:slug', async (c) => {
   try {
     const slug = c.req.param('slug');
     
+    // If the slug is a District Name (from the config keys), 
+    // use that array of cities. Otherwise, wrap the single slug in an array.
+    const targetSlugs = NCR_DISTRICT_CONFIG[slug] || [slug];
+
     const data = await db
       .select({
         skillName: skills.name,
         category: skills.category,
-        count: skillDemand.count,
-        lastUpdated: skillDemand.lastUpdated,
+        count: sql`SUM(${skillDemand.count})`.mapWith(Number), // Merge city counts
+        lastUpdated: sql`MAX(${skillDemand.lastUpdated})`,
       })
       .from(skillDemand)
       .innerJoin(regions, eq(skillDemand.regionId, regions.id))
       .innerJoin(skills, eq(skillDemand.skillId, skills.id))
-      .where(eq(regions.slug, slug))
-      .orderBy(desc(skillDemand.count));
-
-    if (data.length === 0) {
-      return c.json({ error: 'Region not found or no data available' }, 404);
-    }
+      .where(inArray(regions.slug, targetSlugs)) 
+      .groupBy(skills.name, skills.category)
+      .orderBy(desc(sql`SUM(${skillDemand.count})`));
 
     return c.json(data);
   } catch (error) {
-    console.error('Error fetching trends:', error);
     return c.json({ error: 'Failed to fetch trends' }, 500);
   }
 });
