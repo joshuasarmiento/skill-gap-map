@@ -1,0 +1,30 @@
+{
+  "name": "job-skills-scraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "seed": "tsx seed.ts",
+    "scrape": "tsx scraper/index.ts",
+    "server": "tsx backend/src/index.ts",
+    "dev": "tsx watch backend/src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "better-sqlite3": "^12.6.0",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.4",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.0.8",
+    "drizzle-kit": "^0.31.8",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
