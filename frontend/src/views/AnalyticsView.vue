@@ -1,57 +1,104 @@
 <template>
-  <div class="min-h-screen w-full bg-slate-950 pt-32 pb-12 px-6">
+  <div class="min-h-screen bg-slate-950 pt-32 px-8 pb-20">
     <div class="max-w-6xl mx-auto">
       <div class="mb-12">
-        <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
-          Market <span class="text-blue-500">Analytics</span>
-        </h2>
-        <p class="text-slate-500 mt-2 max-w-xl">
-          Aggregated labor market data across the Philippines. Identifying the most in-demand 
-          technical and soft skills based on real-time job availability.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div v-for="stat in summaryStats" :key="stat.label" class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{{ stat.label }}</p>
-          <p class="text-3xl font-black text-white">{{ stat.value }}</p>
+        <h1 class="text-6xl font-black text-white mb-2 uppercase tracking-tighter">
+          National <span class="text-blue-500">Analytics</span>
+        </h1>
+        <div class="flex items-center gap-4">
+          <p class="text-slate-500 font-medium">Consolidated trends from the latest market wide-scan across 88 regions.
+          </p>
+          <div class="h-px flex-1 bg-slate-800"></div>
+          <span
+            class="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            Active Market Pulse
+          </span>
         </div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-        <div class="p-8 border-b border-slate-800 flex justify-between items-center">
-          <h3 class="text-xl font-bold text-white uppercase tracking-tight">Top Trending Skills</h3>
-          <span class="text-xs font-mono text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full">National Ranking</span>
-        </div>
-        
-        <div class="p-8">
-          <div v-if="loading" class="flex justify-center py-12">
-            <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+        <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-[100px] -z-10"></div>
+
+          <div class="flex justify-between items-center mb-10">
+            <h2 class="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+              <span class="w-8 h-px bg-blue-500"></span>
+              In-Demand Skills
+            </h2>
           </div>
-          
+
+          <div v-if="loading" class="space-y-6">
+            <div v-for="i in 8" :key="i" class="h-10 bg-slate-800/50 rounded-xl w-full animate-pulse"></div>
+          </div>
+
           <div v-else class="space-y-8">
-            <div v-for="(skill, index) in topSkills" :key="skill.skillName" class="relative">
-              <div class="flex justify-between items-end mb-2">
-                <div>
-                  <span class="text-slate-600 font-mono text-xs mr-3">#{{ index + 1 }}</span>
-                  <span class="text-lg font-bold text-slate-100 uppercase">{{ skill.skillName }}</span>
-                  <span class="ml-3 text-[10px] text-slate-500 uppercase font-bold tracking-widest">{{ skill.category }}</span>
+            <div v-for="(skill, index) in topSkills" :key="skill.skillName" class="group">
+              <div class="flex justify-between items-end mb-3">
+                <div class="flex items-baseline gap-3">
+                  <span class="text-slate-600 font-mono text-xs italic">{{ (index + 1).toString().padStart(2, '0')
+                    }}</span>
+                  <span
+                    class="text-slate-200 font-black uppercase tracking-tight group-hover:text-blue-400 transition-colors text-lg">
+                    {{ skill.skillName }}
+                  </span>
                 </div>
-                <div class="text-right">
-                  <span class="text-xl font-black text-blue-500">{{ skill.totalCount }}</span>
-                  <span class="text-xs text-slate-600 ml-1 uppercase font-bold">Postings</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-blue-500 font-black text-2xl tabular-nums">{{ skill.totalCount }}</span>
+                  <span class="text-slate-600 text-[10px] font-bold uppercase tracking-widest">Jobs</span>
                 </div>
               </div>
-              <div class="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-1000"
-                  :style="{ width: `${(skill.totalCount / maxDemand) * 100}%` }"
-                ></div>
+              <div class="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-400 rounded-full transition-all duration-1000 ease-out"
+                  :style="{ width: (skill.totalCount / maxCount * 100) + '%' }"></div>
               </div>
             </div>
           </div>
         </div>
+
+        <div class="space-y-6">
+          <div
+            class="bg-blue-600 rounded-[2rem] p-8 text-white shadow-xl shadow-blue-900/20 relative overflow-hidden group">
+            <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+              <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-70">Gross Listings</p>
+            <p class="text-5xl font-black tracking-tighter mb-4">{{ totalDemand.toLocaleString() }}</p>
+            <div class="text-[10px] font-bold bg-white/10 w-fit px-2 py-1 rounded backdrop-blur-sm">
+              PH MARKET AGGREGATE
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-[2rem] p-8">
+            <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Infrastructure</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs text-slate-400 font-bold uppercase">Regions</span>
+                <span class="text-xs text-white font-mono">88</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs text-slate-400 font-bold uppercase">Skill Dict</span>
+                <span class="text-xs text-white font-mono">200+</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-xs text-slate-400 font-bold uppercase">Cities</span>
+                <span class="text-xs text-white font-mono">1,400+</span>
+              </div>
+            </div>
+            <p class="text-slate-500 text-[10px] mt-6 leading-relaxed italic">
+              Data is synthesized using multi-city district mapping for high-fidelity metropolitan snapshots.
+            </p>
+          </div>
+        </div>
+
       </div>
+      <p class="text-slate-500 text-[10px] mt-6 leading-relaxed italic">
+        Data reflects the most recent snapshots of active job listings. Scanned and synchronized to capture current
+        hiring patterns.
+      </p>
     </div>
   </div>
 </template>
@@ -62,24 +109,44 @@ import { ref, onMounted, computed } from 'vue';
 const topSkills = ref([]);
 const loading = ref(true);
 
-const summaryStats = computed(() => [
-  { label: 'Total Postings Analyzed', value: topSkills.value.reduce((acc, s) => acc + s.totalCount, 0).toLocaleString() },
-  { label: 'Unique Skills Tracked', value: topSkills.value.length },
-  { label: 'Data Refresh Rate', value: '24 Hours' }
-]);
-
-const maxDemand = computed(() => {
-  return topSkills.value.length > 0 ? topSkills.value[0].totalCount : 1;
+// Computed properties for safety and formatting
+const maxCount = computed(() => {
+  const counts = topSkills.value.map(s => s.totalCount);
+  return counts.length > 0 ? Math.max(...counts) : 1;
 });
+
+const totalDemand = computed(() =>
+  topSkills.value.reduce((acc, s) => acc + (s.totalCount || 0), 0)
+);
 
 onMounted(async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/top-skills?limit=15');
+    const res = await fetch('http://localhost:3000/api/top-skills?limit=10');
+    if (!res.ok) throw new Error('Failed to fetch');
     topSkills.value = await res.json();
   } catch (err) {
-    console.error('Failed to load analytics:', err);
+    console.error('National analytics fetch error:', err);
   } finally {
     loading.value = false;
   }
 });
 </script>
+
+<style scoped>
+/* Scoped animations to match the rest of the app */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.group {
+  animation: slide-up 0.5s ease-out forwards;
+}
+</style>

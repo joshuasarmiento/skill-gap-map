@@ -117,6 +117,45 @@ app.get('/api/export/csv', async (c) => {
   }
 });
 
+app.get('/api/export/raw', async (c) => {
+  try {
+    const data = await db
+      .select({
+        region: regions.name,
+        skill: skills.name,
+        category: skills.category,
+        demandCount: skillDemand.count,
+        lastUpdated: skillDemand.lastUpdated,
+      })
+      .from(skillDemand)
+      .innerJoin(regions, eq(skillDemand.regionId, regions.id))
+      .innerJoin(skills, eq(skillDemand.skillId, skills.id))
+      .orderBy(desc(skillDemand.count));
+
+    return c.json(data);
+  } catch (error) {
+    return c.json({ error: 'Failed to generate export data' }, 500);
+  }
+});
+
+// National Stats Export (Full Summary)
+app.get('/api/export/summary', async (c) => {
+  const stats = await db
+    .select({
+      skill: skills.name,
+      totalDemand: sql`SUM(${skillDemand.count})`.mapWith(Number)
+    })
+    .from(skillDemand)
+    .innerJoin(skills, eq(skillDemand.skillId, skills.id))
+    .groupBy(skills.name);
+    
+  return c.json({
+    generatedAt: new Date().toISOString(),
+    version: "1.0",
+    data: stats
+  });
+});
+
 const port = 3000;
 console.log(`🚀 Server running at http://localhost:${port}`);
 

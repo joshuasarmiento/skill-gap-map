@@ -71,8 +71,8 @@ I'll provide each file - create them exactly as shown.
 ## Step 6: Setup Database
 
 ```bash
-# Push schema to create database
-npm run db:push
+# Push the schema:
+npx drizzle-kit push
 
 # Seed initial data
 npm run seed
