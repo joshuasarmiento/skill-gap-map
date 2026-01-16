@@ -95,6 +95,28 @@ app.get('/api/top-skills', async (c) => {
   }
 });
 
+app.get('/api/export/csv', async (c) => {
+  try {
+    const allData = await db
+      .select({
+        region: regions.name,
+        skill: skills.name,
+        category: skills.category,
+        demandCount: skillDemand.count,
+        lastUpdated: skillDemand.lastUpdated,
+      })
+      .from(skillDemand)
+      .innerJoin(regions, eq(skillDemand.regionId, regions.id))
+      .innerJoin(skills, eq(skillDemand.skillId, skills.id))
+      .orderBy(desc(skillDemand.count));
+
+    return c.json(allData);
+  } catch (error) {
+    console.error('Export error:', error);
+    return c.json({ error: 'Failed to generate export' }, 500);
+  }
+});
+
 const port = 3000;
 console.log(`🚀 Server running at http://localhost:${port}`);
 
