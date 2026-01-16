@@ -58,7 +58,7 @@
 
         
 
-        <div class="bg-gradient-to-br from-blue-600/20 to-slate-900 p-10 rounded-[2.5rem] border border-blue-500/20">
+        <div class="bg-linear-to-br from-blue-600/20 to-slate-900 p-10 rounded-[2.5rem] border border-blue-500/20">
           <h3 class="text-blue-400 font-bold uppercase mb-8 text-[10px] tracking-[0.4em]">Our Data Reach</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div class="border-l border-blue-500/30 pl-4">

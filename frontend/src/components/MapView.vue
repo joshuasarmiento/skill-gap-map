@@ -15,7 +15,7 @@
     <!-- Legend -->
     <div class="absolute bottom-6 left-6 z-10 bg-slate-900/90 p-4 border border-slate-800 rounded-lg backdrop-blur-md">
       <h4 class="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Job Demand</h4>
-      <div class="h-2 w-32 bg-gradient-to-r from-slate-800 via-blue-600 to-cyan-400 rounded-full mb-1"></div>
+      <div class="h-2 w-32 bg-linear-to-r from-slate-800 via-blue-600 to-cyan-400 rounded-full mb-1"></div>
       <div class="flex justify-between text-[9px] text-slate-500 font-bold uppercase">
         <span>Low</span>
         <span>High</span>
@@ -39,6 +39,7 @@ import { onMounted, ref, nextTick, onUnmounted } from 'vue';
 import maplibregl from 'maplibre-gl';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { NCR_DISTRICT_CONFIG } from '../utils/ncrData';
 
 interface RegionStat {
   name: string;
@@ -50,26 +51,6 @@ interface DistrictMapping {
   primarySlug: string;
   cities: string[];
 }
-
-// 2. Map configuration to handle the complex NCR GeoJSON structure
-const NCR_DISTRICT_CONFIG: Record<string, DistrictMapping> = {
-  'NCR, City of Manila, First District (Not a Province)': {
-    primarySlug: 'manila',
-    cities: ['manila']
-  },
-  'NCR, Second District (Not a Province)': {
-    primarySlug: 'mandaluyong',
-    cities: ['mandaluyong', 'pasig', 'quezon-city', 'marikina', 'san-juan']
-  },
-  'NCR, Third District (Not a Province)': {
-    primarySlug: 'caloocan',
-    cities: ['caloocan', 'malabon', 'navotas', 'valenzuela']
-  },
-  'NCR, Fourth District (Not a Province)': {
-    primarySlug: 'makati',
-    cities: ['makati', 'pasay', 'taguig', 'paranaque', 'las-pinas', 'muntinlupa']
-  }
-};
 
 const emit = defineEmits(['select-region']);
 const mapContainer = ref<HTMLElement | null>(null);
@@ -110,15 +91,15 @@ onMounted(async () => {
 
       geojson.features = geojson.features.map((feature: any, index: number) => {
         const geojsonName = feature.properties.adm2_en || '';
-        const config = NCR_DISTRICT_CONFIG[geojsonName];
+        const ncrCities = NCR_DISTRICT_CONFIG[geojsonName];
 
         let totalDemand = 0;
         let finalSlug = '';
 
-        if (config) {
+        if (ncrCities) {
           // Aggregating NCR District data
-          finalSlug = config.primarySlug;
-          totalDemand = config.cities.reduce((acc, citySlug) => {
+          finalSlug = geojsonName;
+          totalDemand = ncrCities.reduce((acc, citySlug) => {
             const cityData = stats.find((s: any) => s.slug === citySlug);
             return acc + (cityData?.totalDemand || 0);
           }, 0);
@@ -181,11 +162,10 @@ onMounted(async () => {
         if (!e.features?.[0]) return;
         const { slug, displayName } = e.features[0].properties;
 
-        console.log('Clicked region:', displayName, '(slug:', slug, ')');
         // emit('select-region', slug);
         emit('select-region', {
           slug: slug,
-          name: displayName // This will be "NCR, Second District (Not a Province)"
+          name: displayName
         });
 
         map!.flyTo({

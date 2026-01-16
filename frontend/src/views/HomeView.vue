@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-full w-full bg-slate-950">
-    <div class="w-80 h-full border-r border-slate-800 flex flex-col pt-20">
+    <div class="w-80 h-full border-r border-slate-800 flex flex-col pt-4">
       <div class="flex-1 overflow-y-auto p-6">
         <TrendSidebar :slug="selectedSlug" :displayName="selectedName"/>
       </div>
